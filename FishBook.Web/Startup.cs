@@ -1,18 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using FishBook.DAL;
+using FishBook.DAL.Interfaces;
 using FishBook.DAL.Models;
+using FishBook.DAL.Repositories;
+using FishBook.DAL.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FishBook.Web
 {
@@ -52,6 +61,56 @@ namespace FishBook.Web
             identityBuilder.AddSignInManager<SignInManager<User>>();
 
             #endregion
+
+            #region Services
+
+            services.AddScoped<IJwtGenerator, JwtGenerator>();
+            //services.AddScoped<IUserService, UserService>();
+            //services.AddScoped<IImageService, ImageService>();
+
+            #endregion
+
+            #region Repositories
+
+            services.AddScoped<IUserRepository, UserRepository>();
+
+            #endregion
+
+
+            services.AddMvc(option =>
+            {
+                option.EnableEndpointRouting = false;
+                var policy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+                option.Filters.Add(new AuthorizeFilter(policy));
+            }).SetCompatibilityVersion(CompatibilityVersion.Latest);
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
+                opt =>
+                {
+                    opt.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = key,
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                    };
+                });
+
+            services.AddHttpContextAccessor();
+
+            services.AddControllersWithViews().AddRazorRuntimeCompilation();
+
+            services.AddCors(x =>
+            {
+                x.AddPolicy("CorsPolicy", builder =>
+                {
+                    builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,15 +122,11 @@ namespace FishBook.Web
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseCors("CorsPolicy");
 
-            app.UseAuthorization();
+            app.UseAuthentication();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
+            app.UseMvcWithDefaultRoute();
         }
     }
 }
