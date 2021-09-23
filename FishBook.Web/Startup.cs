@@ -8,6 +8,7 @@ using FishBook.DAL.Interfaces;
 using FishBook.DAL.Models;
 using FishBook.DAL.Repositories;
 using FishBook.DAL.Services;
+using FishBook.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -73,18 +74,11 @@ namespace FishBook.Web
             #region Repositories
 
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IPhotoRepository, PhotoRepository>();
 
             #endregion
 
-
-            services.AddMvc(option =>
-            {
-                option.EnableEndpointRouting = false;
-                var policy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
-                    .Build();
-                option.Filters.Add(new AuthorizeFilter(policy));
-            }).SetCompatibilityVersion(CompatibilityVersion.Latest);
+            #region Jwt Auth
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
 
@@ -99,10 +93,8 @@ namespace FishBook.Web
                         ValidateIssuer = false,
                     };
                 });
-
-            services.AddHttpContextAccessor();
-
-            services.AddControllersWithViews().AddRazorRuntimeCompilation();
+            
+            #endregion
 
             services.AddCors(x =>
             {
@@ -111,6 +103,27 @@ namespace FishBook.Web
                     builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
                 });
             });
+
+            #region Services
+            
+            services.AddScoped<IPhotoService, PhotoService>();
+            services.AddScoped<IUserService, UserService>();
+
+            #endregion
+
+            services.AddHttpContextAccessor();
+
+            services.AddControllersWithViews().AddRazorRuntimeCompilation();
+
+            services.AddMvc(option =>
+            {
+                option.EnableEndpointRouting = false;
+                var policy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+                option.Filters.Add(new AuthorizeFilter(policy));
+            }).SetCompatibilityVersion(CompatibilityVersion.Latest);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

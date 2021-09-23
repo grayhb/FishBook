@@ -6,16 +6,33 @@
           Загрузить фотографии
         </v-expansion-panel-header>
         <v-expansion-panel-content class="">
-          <v-file-input
-            v-model="rawFiles"
-            label="Фотографии с gps"
-            dense
-            hide-details
-            outlined
-            multiple
-            :disabled="loading"
-            @change="filesChanged"
-          ></v-file-input>
+          <div class="d-flex">
+            <v-btn icon v-if="files.length > 0" @click="files = []">
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
+            <v-file-input
+              v-if="files.length < 1"
+              v-model="rawFiles"
+              label="Фотографии с gps"
+              dense
+              hide-details
+              hide-input
+              outlined
+              multiple
+              :disabled="loading"
+              @change="filesChanged"
+            ></v-file-input>
+            <v-spacer></v-spacer>
+            <v-btn
+              depressed
+              color="primary"
+              class="mt-2"
+              @click="uploadFiles"
+              :loading="loading"
+            >
+              Загрузить
+            </v-btn>
+          </div>
 
           <div
             v-if="files.length > 0"
@@ -36,15 +53,6 @@
               >
             </div>
           </div>
-          <v-btn
-            depressed
-            color="primary"
-            block
-            class="mt-2"
-            @click="uploadFiles"
-            :loading="loading"
-            >Загрузить</v-btn
-          >
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
@@ -85,15 +93,11 @@ export default {
           }
         });
       });
-
-      console.log(this.files);
     },
     async uploadFiles() {
       this.loading = true;
 
       for (let file of this.files) {
-        //file.status = "ok";
-        //file.status = "error";
         var body = new FormData();
         body.append("file", file.file);
         body.append("longitude", file.longitude);
@@ -110,6 +114,7 @@ export default {
         file.status = "ok";
       }
 
+      this.$emit("uploaded");
       this.loading = false;
     },
     dateTimeNormilize(e) {

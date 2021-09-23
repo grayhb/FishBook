@@ -4,14 +4,16 @@ using FishBook.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FishBook.DAL.Migrations
 {
     [DbContext(typeof(FishBookContext))]
-    partial class FishBookContextModelSnapshot : ModelSnapshot
+    [Migration("20210923211357_AddLonLatDateTimeInPhoto")]
+    partial class AddLonLatDateTimeInPhoto
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

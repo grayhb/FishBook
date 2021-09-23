@@ -18,7 +18,11 @@ class SiteUrl {
   }
 
   upload() {
-    return this.baseUrl() + "api/files/upload";
+    return this.baseUrl() + "api/photos/create";
+  }
+
+  photos() {
+    return this.baseUrl() + "api/photos";
   }
 }
 

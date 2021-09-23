@@ -70,7 +70,24 @@ namespace FishBook.DAL.Repositories
             return item == null ? null : item;
         }
 
+        public async Task<TEntity> GetAsync(Guid id)
+        {
+            TEntity item = await _context.Set<TEntity>()
+                .FindAsync(id);
+
+            return item == null ? null : item;
+        }
+
         public async Task RemoveAsync(int id)
+        {
+            TEntity item = await _context.Set<TEntity>()
+                            .FindAsync(id);
+
+            _context.Remove(item);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RemoveAsync(Guid id)
         {
             TEntity item = await _context.Set<TEntity>()
                             .FindAsync(id);

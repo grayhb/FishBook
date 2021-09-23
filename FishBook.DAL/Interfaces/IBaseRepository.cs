@@ -7,6 +7,8 @@ namespace FishBook.DAL.Interfaces
 {
     public interface IBaseRepository<TEntity> where TEntity : class
     {
+        Task<TEntity> GetAsync(Guid id);
+
         Task<TEntity> FindByIdAsync(int id);
 
         Task CreateAsync(TEntity item);
@@ -16,6 +18,8 @@ namespace FishBook.DAL.Interfaces
         Task EditAsync(List<TEntity> items);
 
         Task RemoveAsync(int id);
+
+        Task RemoveAsync(Guid id);
 
         Task<bool> ExistsAsync(int id);
 
@@ -34,3 +38,4 @@ namespace FishBook.DAL.Interfaces
         Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate);
     }
 }
+

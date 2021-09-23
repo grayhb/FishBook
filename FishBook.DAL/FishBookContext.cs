@@ -8,6 +8,6 @@ namespace FishBook.DAL
     {
         public FishBookContext(DbContextOptions<FishBookContext> options) : base(options) { }
 
-
+        public virtual DbSet<Photo> Photos { get; set; }
     }
 }
