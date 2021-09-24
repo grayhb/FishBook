@@ -3,11 +3,15 @@
     <v-main>
       <login v-if="!authed"></login>
 
-      <div v-else class="profile-wrapper">
-        <v-chip>{{ user.displayName }}</v-chip>
-      </div>
+      <!-- <div v-else class="profile-wrapper">
+        <v-chip label>{{ user.displayName }}</v-chip>
+      </div> -->
 
       <file-uploader v-if="authed" @uploaded="fetchPhotos"></file-uploader>
+
+      <filter-panel v-if="authed" :photos="photos" @filtered="setFilter">
+      </filter-panel>
+
       <vl-map
         class="h-100"
         style="position:absolute"
@@ -21,21 +25,6 @@
           :rotation.sync="rotation"
         ></vl-view>
 
-        <vl-geoloc @update:position="geolocPosition = $event">
-          <template slot-scope="geoloc">
-            <vl-feature v-if="geoloc.position" id="position-feature">
-              <vl-geom-point :coordinates="geoloc.position"></vl-geom-point>
-              <vl-style-box>
-                <vl-style-icon
-                  src="_media/marker.png"
-                  :scale="0.4"
-                  :anchor="[0.5, 1]"
-                ></vl-style-icon>
-              </vl-style-box>
-            </vl-feature>
-          </template>
-        </vl-geoloc>
-
         <vl-layer-tile id="osm">
           <vl-source-osm></vl-source-osm>
         </vl-layer-tile>
@@ -44,9 +33,9 @@
           <vl-geom-point :coordinates="point.coordinates"></vl-geom-point>
 
           <vl-style-box>
-            <vl-style-circle :radius="5" style="cursor: pointer;">
-              <vl-style-fill color="white"></vl-style-fill>
-              <vl-style-stroke color="blue"></vl-style-stroke>
+            <vl-style-circle :radius="6">
+              <vl-style-fill color="#d7e8f5"></vl-style-fill>
+              <vl-style-stroke color="#1f608f"></vl-style-stroke>
             </vl-style-circle>
 
             <vl-style-text
@@ -57,6 +46,16 @@
           </vl-style-box>
         </vl-feature>
 
+        <vl-feature v-if="currentPosition">
+          <vl-geom-point :coordinates="currentPosition"></vl-geom-point>
+          <vl-style-box>
+            <vl-style-circle :radius="10">
+              <vl-style-fill color="green"></vl-style-fill>
+              <vl-style-stroke color="green"></vl-style-stroke>
+            </vl-style-circle>
+          </vl-style-box>
+        </vl-feature>
+
         <vl-interaction-select :features.sync="selectedFeatures">
         </vl-interaction-select>
       </vl-map>
@@ -64,7 +63,10 @@
       <photo-card
         :data="selectedPhoto"
         :show="showPhotoCard"
+        :fishs="fishs"
         @close="showPhotoCard = false"
+        @deleted="deletedSelectedPhoto"
+        @updated="updateSelectedPhoto"
       ></photo-card>
     </v-main>
   </v-app>
@@ -74,6 +76,7 @@
 import login from "./components/login";
 import fileUploader from "./components/file-uploader";
 import photoCard from "./components/photo-card";
+import filterPanel from "./components/filter-panel";
 
 import ApiService from "./services/api.service";
 import SiteUrl from "./settings/siteUrl.settings";
@@ -85,9 +88,50 @@ export default {
     login,
     fileUploader,
     photoCard,
+    filterPanel,
   },
   created() {
     this.checkAuth();
+    this.getCurrentGelocation();
+  },
+  computed: {
+    points() {
+      let items = [];
+      if (this.photos.length > 0) {
+        this.photos.forEach((photo) => {
+          let passPhoto = false;
+
+          if (this.filter.years && this.filter.years.length > 0) {
+            passPhoto =
+              this.filter.years.indexOf(
+                new Date(photo.dateTime).getFullYear()
+              ) === -1;
+          }
+
+          if (!passPhoto && this.filter.fishs && this.filter.fishs.length > 0)
+            passPhoto = this.filter.fishs.indexOf(photo.fishName) === -1;
+
+          if (!passPhoto)
+            items.push({
+              id: photo.id,
+              coordinates: [Number(photo.longitude), Number(photo.latitude)],
+              date: new Date(photo.dateTime).toLocaleDateString(),
+              data: photo,
+            });
+        });
+      }
+      return items;
+    },
+    fishs() {
+      let items = [];
+      if (this.photos.length > 0) {
+        this.photos.forEach((photo) => {
+          if (items.indexOf(photo.fishName) < 0 && photo.fishName)
+            items.push(photo.fishName);
+        });
+      }
+      return items;
+    },
   },
   data: () => ({
     selectedFiles: undefined,
@@ -98,7 +142,6 @@ export default {
     geolocPosition: undefined,
     selectedFeatures: [],
 
-    points: [],
     selectedSrc: "",
 
     overlay: false,
@@ -108,6 +151,9 @@ export default {
 
     selectedPhoto: {},
     showPhotoCard: false,
+
+    currentPosition: null,
+    filter: {},
   }),
   watch: {
     selectedFeatures(e) {
@@ -115,24 +161,76 @@ export default {
     },
   },
   methods: {
+    setFilter(filter) {
+      this.filter = filter;
+    },
+
+    async updateSelectedPhoto(data) {
+      let url = `${SiteUrl.photos()}/${this.selectedPhoto.id}/update`;
+
+      var r = await ApiService.put(url, data);
+
+      if (r.error) {
+        alert(r.error);
+        return;
+      }
+
+      let itemIndex = this.photos.findIndex(
+        (e) => e.id === this.selectedPhoto.id
+      );
+
+      if (itemIndex > -1) {
+        this.photos[itemIndex].fishName = r.data.fishName;
+      }
+
+      this.showPhotoCard = false;
+    },
+    async deletedSelectedPhoto() {
+      let url = `${SiteUrl.photos()}/${this.selectedPhoto.id}/delete`;
+
+      let r = await ApiService.delete(url);
+      if (r.error) {
+        alert(r.error);
+        return;
+      }
+
+      let itemIndex = this.photos.findIndex(
+        (e) => e.id === this.selectedPhoto.id
+      );
+
+      if (itemIndex > -1) {
+        this.photos.splice(itemIndex, 1);
+      }
+
+      this.showPhotoCard = false;
+    },
+    getCurrentGelocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+          (position) => {
+            this.currentPosition = [
+              position.coords.longitude,
+              position.coords.latitude,
+            ];
+          },
+          (e) => {
+            console.log("Ошибка определения геопозиции:", e);
+          }
+        );
+
+        // navigator.geolocation.getCurrentPosition((pos) => {
+        //   this.currentPosition = [pos.coords.longitude, pos.coords.latitude];
+        // });
+      }
+    },
     getPhotoThumbUrl(photo) {
       return SiteUrl.photos() + "/" + photo.id + "/thumb";
     },
     async fetchPhotos() {
-      this.points = [];
-
       let r = await ApiService.get(SiteUrl.photos());
 
       if (!r.error) {
         this.photos = r.data;
-        this.photos.forEach((photo) => {
-          this.points.push({
-            id: photo.id,
-            coordinates: [Number(photo.longitude), Number(photo.latitude)],
-            date: new Date(photo.dateTime).toLocaleDateString(),
-            data: photo,
-          });
-        });
       }
     },
     async checkAuth() {
@@ -166,7 +264,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 html,
 body {
   height: 100%;
@@ -177,17 +275,15 @@ body {
   height: 100%;
 }
 
-.img-selected {
-  max-width: 200px;
-  max-height: 200px;
-  margin: 0.5rem;
-}
-
 .profile-wrapper {
   position: absolute;
-  right: 10px;
-  top: 10px;
+  right: 5px;
+  top: 5px;
   z-index: 100;
   padding: 0.25rem;
+}
+
+.ol-zoom {
+  display: none !important;
 }
 </style>

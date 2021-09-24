@@ -18,6 +18,7 @@ namespace FishBook.DAL.Interfaces
         Task EditAsync(List<TEntity> items);
 
         Task RemoveAsync(int id);
+        Task RemoveAsync(TEntity item);
 
         Task RemoveAsync(Guid id);
 

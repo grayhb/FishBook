@@ -92,6 +92,11 @@ namespace FishBook.DAL.Repositories
             TEntity item = await _context.Set<TEntity>()
                             .FindAsync(id);
 
+            await RemoveAsync(item);
+        }
+
+        public async Task RemoveAsync(TEntity item)
+        {
             _context.Remove(item);
             await _context.SaveChangesAsync();
         }

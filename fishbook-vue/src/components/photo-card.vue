@@ -10,11 +10,23 @@
           class="pt-5 d-flex align-center justify-center flex-column"
         >
           <img :src="thumbUrl" @click="openFull" />
+          <v-combobox
+            v-model="fishName"
+            :items="fishs"
+            outlined
+            dense
+            hide-details
+            class="mt-4"
+            label="Наименование рыбы"
+          ></v-combobox>
         </v-card-text>
 
         <v-divider></v-divider>
 
         <v-card-actions>
+          <v-btn color="red--text" text @click="deleteItem">
+            Удалить
+          </v-btn>
           <v-spacer></v-spacer>
           <v-btn color="primary" text @click="closeDialog">
             Закрыть
@@ -44,7 +56,13 @@ import SiteUrl from "../settings/siteUrl.settings";
 
 export default {
   name: "photo-card",
-  props: ["show", "data"],
+  props: ["show", "data", "fishs"],
+  watch: {
+    show(e) {
+      if (!e) return;
+      this.fishName = this.data.fishName;
+    },
+  },
   computed: {
     thumbUrl() {
       return `${this.imageUrl}/thumb`;
@@ -58,15 +76,34 @@ export default {
   },
   data: () => ({
     showFullDialog: false,
+    fishName: "",
   }),
   methods: {
     closeDialog() {
-      this.$emit("close");
+      setTimeout(() => {
+        if (!this.changed()) this.$emit("close");
+        else this.updateItem();
+      }, 100);
     },
     openFull() {
       this.showFullDialog = true;
-      //let url = `${SiteUrl.photos()}/${this.data.id}`;
-      //window.open(url, "_blank").focus();
+    },
+    deleteItem() {
+      if (confirm("Удалить запись?")) {
+        this.$emit("deleted");
+      }
+    },
+    updateItem() {
+      let data = {
+        id: this.data.id,
+        fishName: this.fishName,
+      };
+      this.$emit("updated", data);
+    },
+    changed() {
+      let result = false;
+      if (this.data.fishName !== this.fishName) result = true;
+      return result;
     },
   },
 };

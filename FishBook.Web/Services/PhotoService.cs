@@ -19,6 +19,10 @@ namespace FishBook.Web.Services
         Task<Photo> GetAsync(Guid id);
         Task<string> GetThumbPhotoAsync(Guid id);
         Task<string> GetPhotoAsync(Guid id);
+
+        Task DeleteAsync(Guid id);
+
+        Task<Photo> UpdateAsync(Photo item);
     }
 
     public class PhotoService : IPhotoService
@@ -102,6 +106,42 @@ namespace FishBook.Web.Services
         {
             var user = await _userService.GetUser();
             return await _photoRepository.GetPhotosByOwnerId(user.Id);
+        }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            var item = await GetAsync(id);
+            if (item == null)
+                return;
+
+            var filePath = Path.Combine(BaseDirectory(), item.FileImage);
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            var fileThumbPath = Path.Combine(BaseDirectory(), item.FileImageThumb);
+            if (File.Exists(fileThumbPath))
+                File.Delete(fileThumbPath);
+
+            await _photoRepository.RemoveAsync(item);
+        }
+
+        public async Task<Photo> UpdateAsync(Photo item)
+        {
+            var existItem = await GetAsync(item.Id);
+
+            if (existItem == null)
+                return null;
+            
+            var user = await _userService.GetUser();
+
+            if (user.Id != existItem.OwnerId)
+                return null;
+
+            existItem.FishName = item.FishName;
+
+            await _photoRepository.EditAsync(existItem);
+
+            return existItem;
         }
 
         private string SaveImage(Image image, string filePath, bool thumb = false)

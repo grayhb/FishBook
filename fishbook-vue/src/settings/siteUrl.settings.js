@@ -2,7 +2,7 @@ class SiteUrl {
   baseUrl() {
     return location.origin.indexOf("localhost") > -1
       ? "http://localhost:5704/"
-      : "./";
+      : "./server/";
   }
 
   registration() {

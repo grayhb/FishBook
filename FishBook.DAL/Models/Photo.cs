@@ -10,7 +10,7 @@ namespace FishBook.DAL.Models
     {
         public Photo()
         {
-            Tags = "";
+            FishName = "";
         }
 
         [Key]
@@ -27,7 +27,7 @@ namespace FishBook.DAL.Models
         [JsonIgnore]
         public string FileImageThumb { get; set; }
         
-        public string Tags { get; set; }
+        public string FishName { get; set; }
 
         public string Longitude { get; set; }
 

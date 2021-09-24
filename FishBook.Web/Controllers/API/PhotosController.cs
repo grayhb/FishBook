@@ -91,6 +91,32 @@ namespace FishBook.Web.Controllers.API
             }
         }
 
+        [HttpDelete("{id}/delete")]
+        public async Task<ActionResult> DeleteItem(Guid id)
+        {
+            try
+            {
+                await _photoService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse() { Error = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/update")] 
+        public async Task<ActionResult<Photo>> UpdateItem(Photo item)
+        {
+            try
+            {
+                return await _photoService.UpdateAsync(item);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse() { Error = ex.Message });
+            }
+        }
         
     }
 }

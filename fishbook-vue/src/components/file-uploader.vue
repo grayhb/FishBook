@@ -3,9 +3,9 @@
     <v-expansion-panels>
       <v-expansion-panel>
         <v-expansion-panel-header style="min-height: 30px">
-          Загрузить фотографии
+          Загрузить
         </v-expansion-panel-header>
-        <v-expansion-panel-content class="">
+        <v-expansion-panel-content class="file-uploader-container">
           <div class="d-flex">
             <v-btn icon v-if="files.length > 0" @click="files = []">
               <v-icon>mdi-delete</v-icon>
@@ -13,7 +13,7 @@
             <v-file-input
               v-if="files.length < 1"
               v-model="rawFiles"
-              label="Фотографии с gps"
+              label="Фото с gps"
               dense
               hide-details
               hide-input
@@ -26,11 +26,14 @@
             <v-btn
               depressed
               color="primary"
-              class="mt-2"
               @click="uploadFiles"
               :loading="loading"
+              :disabled="files.length < 1"
+              icon
             >
-              Загрузить
+              <v-icon>
+                mdi-upload
+              </v-icon>
             </v-btn>
           </div>
 
@@ -38,20 +41,18 @@
             v-if="files.length > 0"
             class="mt-2 file-upload-details-container"
           >
-            <div
+            <v-chip
               v-for="file in files"
               :key="file.id"
-              class="file-upload-details"
+              x-small
+              label
+              class="w-100"
+              :class="{
+                success: file.status === 'ok',
+                error: file.status === 'error',
+              }"
+              >{{ file.file.name }}</v-chip
             >
-              <v-chip
-                class="ml-2"
-                :class="{
-                  success: file.status === 'ok',
-                  error: file.status === 'error',
-                }"
-                >{{ file.file.name }}</v-chip
-              >
-            </div>
           </div>
         </v-expansion-panel-content>
       </v-expansion-panel>
@@ -97,7 +98,7 @@ export default {
     async uploadFiles() {
       this.loading = true;
 
-      for (let file of this.files) {
+      for (let file of this.files.filter((e) => !e.status)) {
         var body = new FormData();
         body.append("file", file.file);
         body.append("longitude", file.longitude);
@@ -143,12 +144,15 @@ export default {
 };
 </script>
 <style scoped>
+.w-100 {
+  width: 100%;
+}
 .file-uploader-wrapper {
   position: absolute;
   z-index: 100;
-  width: 300px;
-  top: 100px;
-  left: 10px;
+  width: 200px;
+  top: 5px;
+  left: 5px;
 }
 
 .file-upload-details-container {
@@ -157,7 +161,11 @@ export default {
 }
 
 .file-upload-details {
-  font-size: 12px;
-  padding: 5px 0;
+}
+</style>
+
+<style>
+.file-uploader-wrapper .v-expansion-panel-content__wrap {
+  padding: 0 10px 10px 10px;
 }
 </style>
