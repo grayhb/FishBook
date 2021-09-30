@@ -82,7 +82,8 @@ namespace FishBook.Web.Services
                 Created = DateTime.Now,
                 Latitude = request.Latitude,
                 Longitude = request.Longitude,
-                DateTime = request.DateTime
+                DateTime = request.DateTime,
+                FishName = request.FishName
             };
 
             var image = Image.FromStream(request.File.OpenReadStream());

@@ -21,6 +21,7 @@
               multiple
               :disabled="loading"
               @change="filesChanged"
+              accept="image/*"
             ></v-file-input>
             <v-spacer></v-spacer>
             <v-btn
@@ -150,7 +151,7 @@ export default {
 .file-uploader-wrapper {
   position: absolute;
   z-index: 100;
-  width: 200px;
+  width: 180px;
   top: 5px;
   left: 5px;
 }

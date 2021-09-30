@@ -1,16 +1,26 @@
 <template>
   <v-app>
     <v-main>
-      <login v-if="!authed"></login>
+      <login v-if="!authed" :loading="loginLoading"></login>
 
       <!-- <div v-else class="profile-wrapper">
         <v-chip label>{{ user.displayName }}</v-chip>
       </div> -->
-
-      <file-uploader v-if="authed" @uploaded="fetchPhotos"></file-uploader>
-
-      <filter-panel v-if="authed" :photos="photos" @filtered="setFilter">
-      </filter-panel>
+      <template v-if="authed">
+        <file-uploader @uploaded="fetchPhotos"></file-uploader>
+        <filter-panel :photos="photos" @filtered="setFilter"> </filter-panel>
+        <v-btn
+          depressed
+          absolute
+          fab
+          class="btn-custom-point"
+          color="primary"
+          @click="toggleCustomeCreate"
+        >
+          <v-icon v-if="!customCreate">mdi-map-marker</v-icon>
+          <v-icon v-else>mdi-map-marker-off</v-icon>
+        </v-btn>
+      </template>
 
       <vl-map
         class="h-100"
@@ -58,15 +68,42 @@
 
         <vl-interaction-select :features.sync="selectedFeatures">
         </vl-interaction-select>
+
+        <vl-layer-vector :z-index="1">
+          <vl-source-vector
+            :features.sync="features"
+            ident="the-source"
+          ></vl-source-vector>
+
+          <vl-style-box>
+            <vl-style-stroke color="green"></vl-style-stroke>
+            <vl-style-fill color="rgba(255,255,255,0.5)"></vl-style-fill>
+          </vl-style-box>
+        </vl-layer-vector>
+
+        <vl-interaction-draw
+          v-if="customCreate"
+          type="Point"
+          source="the-source"
+        >
+          <vl-style-box>
+            <vl-style-circle :radius="6">
+              <vl-style-fill color="#d7e8f5"></vl-style-fill>
+              <vl-style-stroke color="#1f608f"></vl-style-stroke>
+            </vl-style-circle>
+          </vl-style-box>
+        </vl-interaction-draw>
       </vl-map>
 
       <photo-card
         :data="selectedPhoto"
         :show="showPhotoCard"
         :fishs="fishs"
-        @close="showPhotoCard = false"
+        :loading="loadingPhotoCard"
+        @close="closePhotoCard"
         @deleted="deletedSelectedPhoto"
         @updated="updateSelectedPhoto"
+        @created="createCustomPoint"
       ></photo-card>
     </v-main>
   </v-app>
@@ -79,6 +116,7 @@ import photoCard from "./components/photo-card";
 import filterPanel from "./components/filter-panel";
 
 import ApiService from "./services/api.service";
+import PhotoService from "./services/photo.service";
 import SiteUrl from "./settings/siteUrl.settings";
 
 export default {
@@ -134,6 +172,9 @@ export default {
     },
   },
   data: () => ({
+    features: [],
+
+    loginLoading: false,
     selectedFiles: undefined,
 
     center: [50.0665774, 53.141024099999996],
@@ -151,24 +192,67 @@ export default {
 
     selectedPhoto: {},
     showPhotoCard: false,
+    loadingPhotoCard: false,
 
     currentPosition: null,
     filter: {},
+
+    customCreate: false,
   }),
   watch: {
     selectedFeatures(e) {
       this.getSourceByCoordinates(e[0]);
     },
+
+    features(e) {
+      if (e.length > 0) {
+        this.addCustomPoint(e[0].geometry.coordinates);
+        e.splice(0, 1);
+      }
+    },
   },
   methods: {
+    async createCustomPoint(item) {
+      this.loadingPhotoCard = true;
+
+      let r = await PhotoService.upload(item);
+
+      if (r.error) {
+        alert(r.error);
+        return;
+      }
+
+      this.photos.push(r.data);
+
+      this.closePhotoCard();
+    },
+    toggleCustomeCreate() {
+      this.customCreate = !this.customCreate;
+    },
+    closePhotoCard() {
+      this.selectedFeatures = [];
+      this.loadingPhotoCard = false;
+      this.customCreate = false;
+      this.showPhotoCard = false;
+    },
+    addCustomPoint(coordinates) {
+      this.selectedPhoto = {
+        dateTime: new Date().toISOString(),
+        fishName: "",
+        latitude: coordinates[1],
+        longitude: coordinates[0],
+        customCreate: this.customCreate,
+      };
+
+      this.showPhotoCard = true;
+    },
     setFilter(filter) {
       this.filter = filter;
     },
-
     async updateSelectedPhoto(data) {
-      let url = `${SiteUrl.photos()}/${this.selectedPhoto.id}/update`;
+      this.loadingPhotoCard = true;
 
-      var r = await ApiService.put(url, data);
+      let r = await PhotoService.update(this.selectedPhoto.id, data);
 
       if (r.error) {
         alert(r.error);
@@ -183,12 +267,13 @@ export default {
         this.photos[itemIndex].fishName = r.data.fishName;
       }
 
-      this.showPhotoCard = false;
+      this.closePhotoCard();
     },
     async deletedSelectedPhoto() {
-      let url = `${SiteUrl.photos()}/${this.selectedPhoto.id}/delete`;
+      this.loadingPhotoCard = true;
 
-      let r = await ApiService.delete(url);
+      let r = await PhotoService.delete(this.selectedPhoto.id);
+
       if (r.error) {
         alert(r.error);
         return;
@@ -202,7 +287,7 @@ export default {
         this.photos.splice(itemIndex, 1);
       }
 
-      this.showPhotoCard = false;
+      this.closePhotoCard();
     },
     getCurrentGelocation() {
       if (navigator.geolocation) {
@@ -234,6 +319,8 @@ export default {
       }
     },
     async checkAuth() {
+      this.loginLoading = true;
+
       let r = await ApiService.get(SiteUrl.profile());
 
       if (!r.error) {
@@ -241,10 +328,13 @@ export default {
         this.user = r.data;
         this.fetchPhotos();
       }
+
+      this.loginLoading = false;
     },
 
     getSourceByCoordinates(feature) {
       let c = feature?.geometry?.coordinates;
+
       if (!c) return null;
 
       let f = 12;
@@ -281,6 +371,11 @@ body {
   top: 5px;
   z-index: 100;
   padding: 0.25rem;
+}
+
+.btn-custom-point {
+  bottom: 10px;
+  right: 10px;
 }
 
 .ol-zoom {

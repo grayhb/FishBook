@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace FishBook.Web.Domains.Requests
+﻿namespace FishBook.Web.Domains.Requests
 {
     public class RegistrationRequest
     {

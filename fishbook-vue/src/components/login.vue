@@ -47,7 +47,11 @@
           <v-card-actions>
             <v-btn text @click="closeAuthDialog">Отмена</v-btn>
             <v-spacer></v-spacer>
-            <v-btn text color="primary" :loading="loadingLogin" @click="signIn"
+            <v-btn
+              text
+              color="primary"
+              :loading="loadingLogin || loading"
+              @click="signIn"
               >Войти</v-btn
             >
           </v-card-actions>
@@ -132,6 +136,7 @@ import SiteUrl from "../settings/siteUrl.settings";
 //import { doFetch } from "../../helpers/fetch-helper";
 
 export default {
+  props: ["loading"],
   data: () => ({
     authDialog: false,
 

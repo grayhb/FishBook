@@ -44,10 +44,10 @@ export default {
       let items = [];
       if (this.photos.length > 0) {
         this.photos.forEach((photo) => {
-          if (items.indexOf(photo.fishName) < 0 && photo.fishName)
-            items.push(photo.fishName);
+          if (items.indexOf(photo.fishName) < 0) items.push(photo.fishName);
         });
       }
+      items.sort();
       return items;
     },
     years() {
@@ -80,7 +80,7 @@ export default {
 <style scoped>
 .filter-wrapper {
   position: absolute;
-  left: 210px;
+  left: 190px;
   top: 0px;
   z-index: 7;
   padding: 0.25rem;
