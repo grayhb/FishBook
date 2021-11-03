@@ -124,6 +124,7 @@ namespace FishBook.Web
                 option.Filters.Add(new AuthorizeFilter(policy));
             }).SetCompatibilityVersion(CompatibilityVersion.Latest);
 
+            services.AddSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -140,6 +141,9 @@ namespace FishBook.Web
             app.UseAuthentication();
 
             app.UseMvcWithDefaultRoute();
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
     }
 }
