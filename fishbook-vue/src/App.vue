@@ -3,9 +3,6 @@
     <v-main>
       <login v-if="!authed" :loading="loginLoading"></login>
 
-      <!-- <div v-else class="profile-wrapper">
-        <v-chip label>{{ user.displayName }}</v-chip>
-      </div> -->
       <template v-if="authed">
         <file-uploader @uploaded="fetchPhotos"></file-uploader>
         <filter-panel :photos="photos" @filtered="setFilter"> </filter-panel>
@@ -43,7 +40,7 @@
           <vl-geom-point :coordinates="point.coordinates"></vl-geom-point>
 
           <vl-style-box>
-            <vl-style-circle :radius="6">
+            <vl-style-circle :radius="8">
               <vl-style-fill color="#d7e8f5"></vl-style-fill>
               <vl-style-stroke color="#1f608f"></vl-style-stroke>
             </vl-style-circle>
@@ -59,7 +56,7 @@
         <vl-feature v-if="currentPosition">
           <vl-geom-point :coordinates="currentPosition"></vl-geom-point>
           <vl-style-box>
-            <vl-style-circle :radius="10">
+            <vl-style-circle :radius="6">
               <vl-style-fill color="green"></vl-style-fill>
               <vl-style-stroke color="green"></vl-style-stroke>
             </vl-style-circle>
@@ -119,6 +116,8 @@ import ApiService from "./services/api.service";
 import PhotoService from "./services/photo.service";
 import SiteUrl from "./settings/siteUrl.settings";
 
+import "vuelayers/dist/vuelayers.css";
+
 export default {
   name: "App",
 
@@ -129,6 +128,8 @@ export default {
     filterPanel,
   },
   created() {
+    this.fixMobileHeight();
+
     this.checkAuth();
     this.getCurrentGelocation();
   },
@@ -212,6 +213,15 @@ export default {
     },
   },
   methods: {
+    fixMobileHeight() {
+      // link - https://css-tricks.com/the-trick-to-viewport-units-on-mobile/
+      // We listen to the resize event
+      window.addEventListener("resize", () => {
+        // We execute the same script as before
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty("--vh", `${vh}px`);
+      });
+    },
     async createCustomPoint(item) {
       this.loadingPhotoCard = true;
 
@@ -355,14 +365,20 @@ export default {
 </script>
 
 <style>
-html,
+html {
+  height: -webkit-fill-available;
+}
+
 body {
-  height: 100%;
   overflow-y: hidden;
+  min-height: 100vh;
+  /* mobile viewport bug fix */
+  min-height: -webkit-fill-available;
 }
 
 .h-100 {
   height: 100%;
+  height: calc(var(--vh, 1vh) * 100);
 }
 
 .profile-wrapper {
