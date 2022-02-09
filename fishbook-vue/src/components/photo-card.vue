@@ -10,6 +10,9 @@
             indeterminate
             color="primary"
           ></v-progress-circular>
+          <v-btn icon @click="onExport">
+            <v-icon>mdi-export-variant</v-icon>
+          </v-btn>
         </v-card-title>
 
         <v-card-text
@@ -168,6 +171,9 @@ export default {
         if (this.item.file) result = true;
       }
       return result;
+    },
+    onExport() {
+      window.open(this.imageUrl, "_blank");
     },
   },
 };

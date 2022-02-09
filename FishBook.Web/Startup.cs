@@ -100,7 +100,7 @@ namespace FishBook.Web
             {
                 x.AddPolicy("CorsPolicy", builder =>
                 {
-                    builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+                    builder.WithOrigins("http://localhost:8080", "http://192.168.1.98:8080").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
                 });
             });
 
@@ -136,6 +136,7 @@ namespace FishBook.Web
             app.UseStaticFiles();
 
             app.UseRouting();
+
             app.UseCors("CorsPolicy");
 
             app.UseAuthentication();

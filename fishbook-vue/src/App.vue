@@ -20,8 +20,7 @@
       </template>
 
       <vl-map
-        class="h-100"
-        style="position:absolute"
+        class="map-wrapper"
         :load-tiles-while-animating="true"
         :load-tiles-while-interacting="true"
         data-projection="EPSG:4326"
@@ -140,15 +139,25 @@ export default {
         this.photos.forEach((photo) => {
           let passPhoto = false;
 
-          if (this.filter.years && this.filter.years.length > 0) {
+          if (this.filter.years && this.filter.years.length > 0)
             passPhoto =
               this.filter.years.indexOf(
                 new Date(photo.dateTime).getFullYear()
               ) === -1;
-          }
 
           if (!passPhoto && this.filter.fishs && this.filter.fishs.length > 0)
             passPhoto = this.filter.fishs.indexOf(photo.fishName) === -1;
+
+          if (
+            !passPhoto &&
+            this.filter.months &&
+            this.filter.months.length > 0
+          ) {
+            passPhoto =
+              this.filter.months.indexOf(
+                new Date(photo.dateTime).getMonth()
+              ) === -1;
+          }
 
           if (!passPhoto)
             items.push({
@@ -366,19 +375,19 @@ export default {
 
 <style>
 html {
-  height: -webkit-fill-available;
+  overflow-y: hidden;
+  height: 100%;
 }
 
 body {
   overflow-y: hidden;
-  min-height: 100vh;
-  /* mobile viewport bug fix */
-  min-height: -webkit-fill-available;
+  height: 100%;
 }
 
-.h-100 {
-  height: 100%;
-  height: calc(var(--vh, 1vh) * 100);
+.map-wrapper {
+  height: 99vh;
+  overflow-y: hidden;
+  position: absolute;
 }
 
 .profile-wrapper {
