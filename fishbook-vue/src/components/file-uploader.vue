@@ -7,6 +7,11 @@
         </v-expansion-panel-header>
         <v-expansion-panel-content class="file-uploader-container">
           <div class="d-flex">
+            <v-btn @click="mapPointHandler" icon color="primary" class="mr-2">
+              <v-icon v-if="!mapPoint">mdi-map-marker</v-icon>
+              <v-icon v-else>mdi-checkbox-marked-circle</v-icon>
+            </v-btn>
+
             <v-btn icon v-if="files.length > 0" @click="files = []">
               <v-icon>mdi-delete</v-icon>
             </v-btn>
@@ -73,6 +78,7 @@ export default {
     rawFiles: [],
     files: [],
     loading: false,
+    mapPoint: false,
   }),
   methods: {
     filesChanged() {
@@ -140,6 +146,10 @@ export default {
     },
     DD(d, m, s) {
       return d + m / 60 + s / 3600;
+    },
+    mapPointHandler() {
+      this.mapPoint = !this.mapPoint;
+      this.$emit("change-map-point", this.mapPoint);
     },
   },
 };

@@ -4,14 +4,15 @@ import App from "./App.vue";
 import VueRouter from "vue-router";
 import Vuex from "vuex";
 import vuetify from "./plugins/vuetify";
-import VueLayers from "vuelayers";
+
+//import VueLayers from "vuelayers";
 //import "vuelayers/lib/style.css";
 
 Vue.config.productionTip = false;
 
 Vue.use(VueRouter);
 Vue.use(Vuex);
-Vue.use(VueLayers);
+//Vue.use(VueLayers);
 
 new Vue({
   vuetify,
