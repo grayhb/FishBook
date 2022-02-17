@@ -138,6 +138,7 @@ namespace FishBook.Web.Services
             if (user.Id != existItem.OwnerId)
                 return null;
 
+            existItem.DateTime = item.DateTime;
             existItem.FishName = item.FishName;
 
             await _photoRepository.EditAsync(existItem);

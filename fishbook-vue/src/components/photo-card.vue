@@ -2,17 +2,23 @@
   <div>
     <v-dialog v-model="show" width="350" persistent @keydown.esc="closeDialog">
       <v-card>
-        <v-card-title class="text-h5 grey lighten-2">
-          <span>{{ date }}</span>
+        <v-card-title class="grey lighten-2 d-flex flex-nowrap px-3">
+          <v-btn icon @click="onExport" class="mr-3">
+            <v-icon>mdi-export-variant</v-icon>
+          </v-btn>
           <v-spacer></v-spacer>
+
+          <input
+            v-if="!loading"
+            type="datetime-local"
+            v-model="item.dateTime"
+          />
+
           <v-progress-circular
-            v-if="loading"
+            v-else
             indeterminate
             color="primary"
           ></v-progress-circular>
-          <v-btn icon @click="onExport">
-            <v-icon>mdi-export-variant</v-icon>
-          </v-btn>
         </v-card-title>
 
         <v-card-text
@@ -105,8 +111,7 @@ export default {
   watch: {
     show(e) {
       if (!e) return;
-      this.item = Object.assign({}, this.data);
-      if (this.isCustomCreate) this.rawFile = null;
+      this.item = JSON.parse(JSON.stringify(this.data));
     },
   },
   computed: {
@@ -127,7 +132,6 @@ export default {
   data: () => ({
     showFullDialog: false,
     item: {},
-    //rawFile: null,
   }),
   methods: {
     customSave() {
@@ -136,10 +140,11 @@ export default {
       }
     },
     selectedRawFile(e) {
-      if (e) {
-        this.item.dateTime = new Date(e.lastModified).toISOString();
-        console.log(e);
-      } else this.item.dateTime = new Date().toISOString();
+      if (e && e.lastModified) {
+        this.item.dateTime = new Date(e.lastModified)
+          .toISOString()
+          .substr(0, 16);
+      }
     },
     closeDialog() {
       setTimeout(() => {
@@ -159,6 +164,7 @@ export default {
       let data = {
         id: this.item.id,
         fishName: this.item.fishName,
+        dateTime: this.item.dateTime,
       };
       this.$emit("updated", data);
     },
@@ -166,7 +172,11 @@ export default {
       let result = false;
 
       if (!this.isCustomCreate) {
-        if (this.data.fishName !== this.item.fishName) result = true;
+        if (
+          this.data.fishName !== this.item.fishName ||
+          this.data.dateTime !== this.item.dateTime
+        )
+          result = true;
       } else {
         if (this.item.file) result = true;
       }

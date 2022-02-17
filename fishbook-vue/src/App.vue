@@ -163,7 +163,7 @@ export default {
     },
     addCustomPoint(coordinates) {
       this.selectedPhoto = {
-        dateTime: new Date().toISOString(),
+        dateTime: new Date().toISOString().substr(0, 16),
         fishName: "",
         latitude: coordinates[1],
         longitude: coordinates[0],
@@ -191,6 +191,7 @@ export default {
 
       if (itemIndex > -1) {
         this.photos[itemIndex].fishName = r.data.fishName;
+        this.photos[itemIndex].dateTime = r.data.dateTime;
       }
 
       this.closePhotoCard();
